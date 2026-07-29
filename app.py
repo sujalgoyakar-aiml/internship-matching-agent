@@ -3,8 +3,189 @@ import requests
 import json
 from groq import Groq
 
-st.set_page_config(page_title="Internship Matching Agent", page_icon="🎯", layout="centered")
+st.set_page_config(page_title="Signal — Internship Matching Agent", page_icon="◎", layout="centered")
 
+st.markdown("""
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap');
+
+html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
+
+.stApp {
+    background: #F6F2E9;
+}
+
+.signal-header {
+    padding: 0.5rem 0 1.5rem 0;
+    border-bottom: 1px solid rgba(29, 44, 78, 0.15);
+    margin-bottom: 1.75rem;
+}
+.signal-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    color: #B5792A;
+    letter-spacing: 0.18em;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    margin-bottom: 0.4rem;
+}
+.signal-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 2.3rem;
+    color: #1D2C4E;
+    margin: 0;
+    letter-spacing: -0.02em;
+}
+.signal-sub {
+    color: #5B5647;
+    font-size: 0.98rem;
+    margin-top: 0.5rem;
+    max-width: 34rem;
+}
+
+div[data-testid="stForm"] {
+    background: #FFFDF8;
+    border: 1px solid rgba(29, 44, 78, 0.14);
+    border-radius: 14px;
+    padding: 1.6rem 1.6rem 1rem 1.6rem;
+}
+
+.stTextInput input, .stTextArea textarea {
+    background: #FBF8F1 !important;
+    border: 1px solid rgba(29, 44, 78, 0.18) !important;
+    border-radius: 8px !important;
+    color: #1D2C4E !important;
+}
+.stTextInput input:focus, .stTextArea textarea:focus {
+    border-color: #1D2C4E !important;
+    box-shadow: 0 0 0 1px #1D2C4E !important;
+}
+
+.stFormSubmitButton button {
+    background: #1D2C4E !important;
+    color: #F6F2E9 !important;
+    font-weight: 600 !important;
+    border-radius: 8px !important;
+    border: none !important;
+    padding: 0.55rem 1.4rem !important;
+}
+.stFormSubmitButton button:hover {
+    background: #2A3D68 !important;
+}
+
+.match-card {
+    position: relative;
+    background: #FFFDF8;
+    border: 1px solid rgba(29, 44, 78, 0.12);
+    border-left: 3px solid #1D2C4E;
+    border-radius: 10px;
+    padding: 1.3rem 1.5rem 1.4rem 1.5rem;
+    margin-bottom: 1.1rem;
+}
+.match-rank {
+    font-family: 'JetBrains Mono', monospace;
+    color: #B5792A;
+    font-size: 0.78rem;
+    letter-spacing: 0.1em;
+}
+.match-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 1.35rem;
+    color: #1D2C4E;
+    margin: 0.15rem 0 0.35rem 0;
+}
+.match-meta {
+    color: #6B6656;
+    font-size: 0.9rem;
+    margin-bottom: 0.9rem;
+}
+.match-score {
+    font-family: 'JetBrains Mono', monospace;
+    color: #B5792A;
+    background: rgba(181, 121, 42, 0.12);
+    border-radius: 4px;
+    padding: 0.05rem 0.4rem;
+}
+.pitch-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #B5792A;
+    margin-bottom: 0.35rem;
+}
+.pitch-text {
+    color: #33302A;
+    font-size: 0.95rem;
+    line-height: 1.55;
+}
+</style>
+
+<div class="signal-header">
+    <div class="signal-eyebrow">◎ AUTONOMOUS AGENT · LIVE INTERNSHIP DATA</div>
+    <div class="signal-title">Signal</div>
+    <div class="signal-sub">Searches real listings, scores them against your skills, and drafts a tailored pitch for the strongest matches — no hardcoded steps, the agent decides its own path.</div>
+</div>
+""", unsafe_allow_html=True)
+
+st.markdown("""
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Inter:wght@400;500;600&display=swap');
+
+html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
+h1, h2, h3 { font-family: 'Fraunces', serif !important; letter-spacing: -0.01em; }
+
+.stApp { background: #FAF8F5; }
+
+/* Pipeline signature strip */
+.pipeline-strip {
+    display: flex; align-items: center; gap: 0.6rem;
+    margin: 0.4rem 0 1.6rem 0; flex-wrap: wrap;
+}
+.pipeline-step {
+    background: #FFFFFF; border: 1px solid #E4DFD6; border-radius: 999px;
+    padding: 0.35rem 0.9rem; font-size: 0.82rem; font-weight: 600;
+    color: #1E3A5F; display: flex; align-items: center; gap: 0.4rem;
+}
+.pipeline-arrow { color: #C9A15A; font-size: 1rem; }
+
+/* Result cards */
+.result-card {
+    background: #FFFFFF; border: 1px solid #E9E4DA; border-radius: 14px;
+    padding: 1.4rem 1.6rem; margin-bottom: 1.1rem;
+    box-shadow: 0 1px 3px rgba(30,58,95,0.05);
+}
+.result-card h3 { margin: 0 0 0.3rem 0; color: #1E3A5F; font-size: 1.35rem; }
+.result-meta { color: #6B7280; font-size: 0.92rem; margin-bottom: 0.8rem; }
+.match-badge {
+    display: inline-block; background: #F0E6D2; color: #8A6A1F;
+    border-radius: 999px; padding: 0.15rem 0.65rem; font-size: 0.78rem;
+    font-weight: 600; margin-left: 0.4rem;
+}
+.pitch-label {
+    font-weight: 600; color: #1E3A5F; font-size: 0.85rem;
+    text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.3rem;
+}
+.pitch-text { color: #2C2C2C; line-height: 1.55; margin-bottom: 0.9rem; }
+
+div[data-testid="stForm"] {
+    background: #FFFFFF; border: 1px solid #E9E4DA; border-radius: 16px;
+    padding: 1.6rem;
+}
+.stButton button, .stFormSubmitButton button {
+    background: #1E3A5F !important; color: white !important; border: none !important;
+    border-radius: 8px !important; font-weight: 600 !important;
+}
+div[data-testid="stLinkButton"] a {
+    background: #FFFFFF !important; color: #1E3A5F !important;
+    border: 1.5px solid #1E3A5F !important; border-radius: 8px !important;
+    font-weight: 600 !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
+# ---------------- Secrets & client ----------------
 GROQ_API_KEY = st.secrets["GROQ_API_KEY"]
 ADZUNA_APP_ID = st.secrets["ADZUNA_APP_ID"]
 ADZUNA_APP_KEY = st.secrets["ADZUNA_APP_KEY"]
@@ -23,6 +204,7 @@ SYSTEM_PROMPT = (
 )
 
 
+# ---------------- Tools ----------------
 def search_internships(query: str):
     url = "https://api.adzuna.com/v1/api/jobs/in/search/1"
     params = {
@@ -115,6 +297,7 @@ tool_schemas = [
 ]
 
 
+# ---------------- Agent loop (collects structured results for the UI) ----------------
 def run_agent(user_goal: str, skills: list, projects: list, status_box):
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
@@ -162,9 +345,7 @@ def run_agent(user_goal: str, skills: list, projects: list, status_box):
     return collected_listings, collected_pitches, "Reached the loop limit — try a narrower search."
 
 
-st.title("🎯 Internship Matching Agent")
-st.caption("Finds real internships, scores them against your skills, and drafts a tailored pitch for the best matches.")
-
+# ---------------- UI ----------------
 with st.form("search_form"):
     field = st.text_input("Field / Department", placeholder="e.g. AI/ML, Civil, Mechanical, MBBS")
     skills_input = st.text_input("Your skills (comma-separated)", placeholder="e.g. Python, RAG, Streamlit")
@@ -186,20 +367,26 @@ if submitted:
             )
             status_box.update(label="Done", state="complete")
 
-        st.divider()
-
         pitch_by_title = {p["listing_title"]: p["pitch"] for p in pitches}
 
         if not listings:
             st.info("No matching listings found — try a broader field or fewer skill keywords.")
         else:
-            st.subheader("Top Matches")
-            for job in listings[:5]:
-                with st.container(border=True):
-                    st.markdown(f"### {job['title']}")
-                    st.markdown(f"**{job['company']}** · {job['location']} · Match score: {job['match_score']}")
-                    if job['title'] in pitch_by_title:
-                        st.markdown("**Pitch:**")
-                        st.write(pitch_by_title[job['title']])
-                    if job.get("url"):
-                        st.link_button("Apply / View Listing", job["url"])
+            st.markdown('<div class="signal-eyebrow" style="margin-top:1.5rem;">RANKED RESULTS</div>', unsafe_allow_html=True)
+            for i, job in enumerate(listings[:5], start=1):
+                pitch_html = ""
+                if job['title'] in pitch_by_title:
+                    pitch_html = f"""
+                        <div class="pitch-label">Pitch</div>
+                        <div class="pitch-text">{pitch_by_title[job['title']]}</div>
+                    """
+                st.markdown(f"""
+                    <div class="match-card">
+                        <div class="match-rank">{i:02d}</div>
+                        <div class="match-title">{job['title']}</div>
+                        <div class="match-meta">{job['company']} · {job['location']} · <span class="match-score">score {job['match_score']}</span></div>
+                        {pitch_html}
+                    </div>
+                """, unsafe_allow_html=True)
+                if job.get("url"):
+                    st.link_button("Apply / View Listing", job["url"])
