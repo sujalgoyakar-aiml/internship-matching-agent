@@ -5,7 +5,6 @@ from groq import Groq
 
 st.set_page_config(page_title="Internship Matching Agent", page_icon="🎯", layout="centered")
 
-# ---------------- Secrets & client ----------------
 GROQ_API_KEY = st.secrets["GROQ_API_KEY"]
 ADZUNA_APP_ID = st.secrets["ADZUNA_APP_ID"]
 ADZUNA_APP_KEY = st.secrets["ADZUNA_APP_KEY"]
@@ -24,7 +23,6 @@ SYSTEM_PROMPT = (
 )
 
 
-# ---------------- Tools ----------------
 def search_internships(query: str):
     url = "https://api.adzuna.com/v1/api/jobs/in/search/1"
     params = {
@@ -117,7 +115,6 @@ tool_schemas = [
 ]
 
 
-# ---------------- Agent loop (collects structured results for the UI) ----------------
 def run_agent(user_goal: str, skills: list, projects: list, status_box):
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
@@ -165,7 +162,6 @@ def run_agent(user_goal: str, skills: list, projects: list, status_box):
     return collected_listings, collected_pitches, "Reached the loop limit — try a narrower search."
 
 
-# ---------------- UI ----------------
 st.title("🎯 Internship Matching Agent")
 st.caption("Finds real internships, scores them against your skills, and drafts a tailored pitch for the best matches.")
 
