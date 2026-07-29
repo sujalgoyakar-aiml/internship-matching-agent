@@ -376,17 +376,20 @@ if submitted:
             for i, job in enumerate(listings[:5], start=1):
                 pitch_html = ""
                 if job['title'] in pitch_by_title:
-                    pitch_html = f"""
-                        <div class="pitch-label">Pitch</div>
-                        <div class="pitch-text">{pitch_by_title[job['title']]}</div>
-                    """
-                st.markdown(f"""
-                    <div class="match-card">
-                        <div class="match-rank">{i:02d}</div>
-                        <div class="match-title">{job['title']}</div>
-                        <div class="match-meta">{job['company']} · {job['location']} · <span class="match-score">score {job['match_score']}</span></div>
-                        {pitch_html}
-                    </div>
-                """, unsafe_allow_html=True)
+                    pitch_text = pitch_by_title[job['title']]
+                    pitch_html = (
+                        '<div class="pitch-label">Pitch</div>'
+                        f'<div class="pitch-text">{pitch_text}</div>'
+                    )
+                card_html = (
+                    '<div class="match-card">'
+                    f'<div class="match-rank">{i:02d}</div>'
+                    f'<div class="match-title">{job["title"]}</div>'
+                    f'<div class="match-meta">{job["company"]} · {job["location"]} · '
+                    f'<span class="match-score">score {job["match_score"]}</span></div>'
+                    f'{pitch_html}'
+                    '</div>'
+                )
+                st.markdown(card_html, unsafe_allow_html=True)
                 if job.get("url"):
                     st.link_button("Apply / View Listing", job["url"])
