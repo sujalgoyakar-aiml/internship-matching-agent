@@ -5,7 +5,8 @@ against a candidate's skills, and drafts tailored application pitches —
 built on a **decide → act → observe → repeat** tool-calling loop, wrapped
 in a clean Streamlit interface.
 
-**Live demo:** _add your Streamlit Cloud link here after deploying_
+*Live demo:* https://internship-matching-agent-4sqz4bwmacubdh84frxhk8.streamlit.app/
+
 
 ## How it works
 
