@@ -60,6 +60,16 @@ div[data-testid="stForm"] {
     border-color: #1D2C4E !important;
     box-shadow: 0 0 0 1px #1D2C4E !important;
 }
+.stTextInput label p, .stTextArea label p,
+[data-testid="stWidgetLabel"] p, [data-testid="stWidgetLabel"] {
+    color: #1D2C4E !important;
+    font-weight: 600 !important;
+    font-size: 0.95rem !important;
+    opacity: 1 !important;
+}
+[data-testid="stCaptionContainer"] p {
+    color: #6B6656 !important;
+}
 
 .stFormSubmitButton button {
     background: #1D2C4E !important;
@@ -127,62 +137,6 @@ div[data-testid="stForm"] {
     <div class="signal-title">Signal</div>
     <div class="signal-sub">Searches real listings, scores them against your skills, and drafts a tailored pitch for the strongest matches — no hardcoded steps, the agent decides its own path.</div>
 </div>
-""", unsafe_allow_html=True)
-
-st.markdown("""
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Inter:wght@400;500;600&display=swap');
-
-html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
-h1, h2, h3 { font-family: 'Fraunces', serif !important; letter-spacing: -0.01em; }
-
-.stApp { background: #FAF8F5; }
-
-/* Pipeline signature strip */
-.pipeline-strip {
-    display: flex; align-items: center; gap: 0.6rem;
-    margin: 0.4rem 0 1.6rem 0; flex-wrap: wrap;
-}
-.pipeline-step {
-    background: #FFFFFF; border: 1px solid #E4DFD6; border-radius: 999px;
-    padding: 0.35rem 0.9rem; font-size: 0.82rem; font-weight: 600;
-    color: #1E3A5F; display: flex; align-items: center; gap: 0.4rem;
-}
-.pipeline-arrow { color: #C9A15A; font-size: 1rem; }
-
-/* Result cards */
-.result-card {
-    background: #FFFFFF; border: 1px solid #E9E4DA; border-radius: 14px;
-    padding: 1.4rem 1.6rem; margin-bottom: 1.1rem;
-    box-shadow: 0 1px 3px rgba(30,58,95,0.05);
-}
-.result-card h3 { margin: 0 0 0.3rem 0; color: #1E3A5F; font-size: 1.35rem; }
-.result-meta { color: #6B7280; font-size: 0.92rem; margin-bottom: 0.8rem; }
-.match-badge {
-    display: inline-block; background: #F0E6D2; color: #8A6A1F;
-    border-radius: 999px; padding: 0.15rem 0.65rem; font-size: 0.78rem;
-    font-weight: 600; margin-left: 0.4rem;
-}
-.pitch-label {
-    font-weight: 600; color: #1E3A5F; font-size: 0.85rem;
-    text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.3rem;
-}
-.pitch-text { color: #2C2C2C; line-height: 1.55; margin-bottom: 0.9rem; }
-
-div[data-testid="stForm"] {
-    background: #FFFFFF; border: 1px solid #E9E4DA; border-radius: 16px;
-    padding: 1.6rem;
-}
-.stButton button, .stFormSubmitButton button {
-    background: #1E3A5F !important; color: white !important; border: none !important;
-    border-radius: 8px !important; font-weight: 600 !important;
-}
-div[data-testid="stLinkButton"] a {
-    background: #FFFFFF !important; color: #1E3A5F !important;
-    border: 1.5px solid #1E3A5F !important; border-radius: 8px !important;
-    font-weight: 600 !important;
-}
-</style>
 """, unsafe_allow_html=True)
 
 # ---------------- Secrets & client ----------------
@@ -347,10 +301,12 @@ def run_agent(user_goal: str, skills: list, projects: list, status_box):
 
 # ---------------- UI ----------------
 with st.form("search_form"):
-    field = st.text_input("Field / Department", placeholder="e.g. AI/ML, Civil, Mechanical, MBBS")
-    skills_input = st.text_input("Your skills (comma-separated)", placeholder="e.g. Python, RAG, Streamlit")
-    projects_input = st.text_area("Your projects/experience (comma-separated)",
-                                   placeholder="e.g. StudyMate AI - RAG-based study assistant using Groq API")
+    field = st.text_input("Field / Department — e.g. AI/ML, Civil, Mechanical, MBBS")
+    st.caption("What area are you looking for internships in?")
+    skills_input = st.text_input("Your skills, comma-separated — e.g. Python, RAG, Streamlit")
+    st.caption("List your technical or subject skills, separated by commas.")
+    projects_input = st.text_area("Your projects/experience, comma-separated — e.g. StudyMate AI: RAG-based study assistant")
+    st.caption("Briefly describe your projects or work experience — this is what the pitch will reference.")
     submitted = st.form_submit_button("Find Internships & Draft Pitches")
 
 if submitted:
