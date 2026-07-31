@@ -6,7 +6,7 @@ built on a hand-written **decide → act → observe → repeat** tool-calling
 loop against the raw Groq API. No agent framework (no LangChain, no
 CrewAI) — the loop logic is fully visible and hand-built.
 
-*Live demo:* https://internship-matching-agent-4sqz4bwmacubdh84frxhk8.streamlit.app
+*Live demo:* https://internship-matching-agent-4sqz4bwmacubdh84frxhk8.streamlit.app/
 
 # Project structure
 
