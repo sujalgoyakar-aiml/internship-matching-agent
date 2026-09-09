@@ -1,15 +1,8 @@
-"""
-tools.py — The agent's three tools: search_internships, score_match,
-draft_pitch. Also defines TOOL_FUNCTIONS and tool_schemas, the two
-things agent.py needs to run the loop.
-"""
-
 import requests
 from config import client, MODEL, ADZUNA_APP_ID, ADZUNA_APP_KEY
 
 
 def search_internships(query: str):
-    """Real function — queries Adzuna's job search API for India."""
     url = "https://api.adzuna.com/v1/api/jobs/in/search/1"
     params = {
         "app_id": ADZUNA_APP_ID,
@@ -36,17 +29,15 @@ def search_internships(query: str):
 
 
 def score_match(listings: list, skills: list):
-    """Ranks listings by literal keyword overlap with candidate skills."""
     scored = []
     for job in listings:
-        overlap = sum(1 for s in skills if s.lower() in job["desc"].lower())
+        overlap = sum(1 for s in skills if s.lower() in job.get("desc", "").lower())
         scored.append({**job, "match_score": overlap})
     scored.sort(key=lambda x: x["match_score"], reverse=True)
     return scored
 
 
 def draft_pitch(listing: dict, skills: list, projects: list):
-    """Generates a tailored 3-sentence pitch via an internal LLM call."""
     if isinstance(projects, str):
         projects = [projects]
     if isinstance(skills, str):
@@ -54,8 +45,8 @@ def draft_pitch(listing: dict, skills: list, projects: list):
 
     prompt = f"""Write a short, genuine-sounding 3-sentence pitch for this internship application.
 
-Internship: {listing.get('title')} at {listing.get('company')}
-Internship description: {listing.get('desc')}
+Internship: {listing.get('title', 'Position')} at {listing.get('company', 'Company')}
+Internship description: {listing.get('desc', '')}
 
 Candidate skills: {', '.join(skills)}
 Candidate projects: {', '.join(projects)}
@@ -67,7 +58,9 @@ Rules:
 - Do not use placeholders like [Company Name] - use the real company name given above
 """
     response = client.chat.completions.create(
-        model=MODEL, messages=[{"role": "user", "content": prompt}], max_tokens=500,
+        model=MODEL,
+        messages=[{"role": "user", "content": prompt}],
+        max_tokens=500,
     )
     pitch_text = response.choices[0].message.content
     return {"listing_title": listing.get("title"), "company": listing.get("company"), "pitch": pitch_text}
@@ -80,28 +73,49 @@ TOOL_FUNCTIONS = {
 }
 
 tool_schemas = [
-    {"type": "function", "function": {
-        "name": "search_internships",
-        "description": "Search internship platforms for listings matching a query.",
-        "parameters": {"type": "object", "properties": {
-            "query": {"type": "string", "description": "Search query, e.g. 'AI ML internship Pune'"}},
-            "required": ["query"]},
-    }},
-    {"type": "function", "function": {
-        "name": "score_match",
-        "description": "Score a list of internship listings against a list of candidate skills.",
-        "parameters": {"type": "object", "properties": {
-            "listings": {"type": "array", "description": "List of internship listing objects to score"},
-            "skills": {"type": "array", "items": {"type": "string"}, "description": "Candidate's skill list"}},
-            "required": ["listings", "skills"]},
-    }},
-    {"type": "function", "function": {
-        "name": "draft_pitch",
-        "description": "Generate a short tailored pitch for ONE specific internship listing, referencing the candidate's matching project and skills.",
-        "parameters": {"type": "object", "properties": {
-            "listing": {"type": "object", "description": "A single internship listing object (title, company, desc)"},
-            "skills": {"type": "array", "items": {"type": "string"}, "description": "Candidate's skill list"},
-            "projects": {"type": "array", "items": {"type": "string"}, "description": "Candidate's project names/descriptions"}},
-            "required": ["listing", "skills", "projects"]},
-    }},
+    {
+        "type": "function",
+        "function": {
+            "name": "search_internships",
+            "description": "Search internship platforms for listings matching a query.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {"type": "string", "description": "Search query, e.g. 'AI ML internship Pune'"}
+                },
+                "required": ["query"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "score_match",
+            "description": "Score a list of internship listings against a list of candidate skills.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "listings": {"type": "array", "description": "List of internship listing objects to score"},
+                    "skills": {"type": "array", "items": {"type": "string"}, "description": "Candidate's skill list"},
+                },
+                "required": ["listings", "skills"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "draft_pitch",
+            "description": "Generate a short tailored pitch for ONE specific internship listing.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "listing": {"type": "object", "description": "A single internship listing object (title, company, desc)"},
+                    "skills": {"type": "array", "items": {"type": "string"}, "description": "Candidate's skill list"},
+                    "projects": {"type": "array", "items": {"type": "string"}, "description": "Candidate's project list"},
+                },
+                "required": ["listing"],
+            },
+        },
+    },
 ]
