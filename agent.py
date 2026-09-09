@@ -17,7 +17,10 @@ SYSTEM_PROMPT = (
     "You must NEVER write pitch or cover-letter text directly in your own reply. "
     "Any pitch content MUST come from calling the draft_pitch tool — even though "
     "you are capable of writing it yourself, you are required to use the tool "
-    "so the output follows the exact required format."
+    "so the output follows the exact required format. "
+    "score_match takes no arguments — call it with an empty object. "
+    "draft_pitch only needs the zero-based listing_index — never repeat listing "
+    "title, company, or description back as arguments."
 )
 
 MAX_LOOPS = 8  # safety cap so a stuck loop can't run forever
@@ -52,7 +55,8 @@ def run_agent(user_goal: str, skills: list, projects: list, status_box=None):
         {"role": "system", "content": SYSTEM_PROMPT},
         {"role": "user", "content": f"{user_goal}\nMy skills: {', '.join(skills)}\nMy projects: {', '.join(projects)}"}
     ]
-    collected_listings = []
+    raw_listings = []        # accumulated across search_internships calls
+    collected_listings = []  # scored + sorted, set by score_match
     collected_pitches = []
     loop_count = 0
 
@@ -66,7 +70,7 @@ def run_agent(user_goal: str, skills: list, projects: list, status_box=None):
             messages.append(message)
             for call in tool_calls:
                 fn_name = call.function.name
-                fn_args = json.loads(call.function.arguments)
+                fn_args = json.loads(call.function.arguments) if call.function.arguments else {}
 
                 if status_box:
                     if fn_name == "search_internships":
@@ -74,22 +78,36 @@ def run_agent(user_goal: str, skills: list, projects: list, status_box=None):
                     elif fn_name == "score_match":
                         status_box.write("📊 Scoring listings against your skills...")
                     elif fn_name == "draft_pitch":
-                        status_box.write(f"✍️ Drafting pitch for **{fn_args.get('listing', {}).get('title', '')}**...")
+                        status_box.write("✍️ Drafting pitch...")
 
-                func = TOOL_FUNCTIONS[fn_name]
-                result = func(**fn_args)
+                # score_match and draft_pitch get their real arguments built
+                # here from what the agent already holds in Python, instead
+                # of trusting the model to repeat full listing data back as
+                # function-call arguments. That duplication — once in the
+                # tool result, again in the model's own arguments — was
+                # driving the TPM rate limit.
+                if fn_name == "search_internships":
+                    result = TOOL_FUNCTIONS[fn_name](**fn_args)
+                    raw_listings.extend(result)
+                    tool_result_for_model = {"status": "found", "count": len(result)}
 
-                # Keep full results for the app's own return values, but only
-                # send the model a lightweight summary back — feeding the full
-                # payload into `messages` every loop is what was driving token
-                # usage up to the TPM ceiling on multi-step queries.
-                if fn_name == "score_match":
+                elif fn_name == "score_match":
+                    result = TOOL_FUNCTIONS[fn_name](listings=raw_listings, skills=skills)
                     collected_listings = result
                     tool_result_for_model = {"status": "scored", "count": len(result)}
+
                 elif fn_name == "draft_pitch":
-                    collected_pitches.append(result)
-                    tool_result_for_model = {"status": "pitch_drafted"}
+                    idx = fn_args.get("listing_index", 0)
+                    if not isinstance(idx, int) or idx < 0 or idx >= len(collected_listings):
+                        tool_result_for_model = {"status": "error", "message": "invalid listing_index"}
+                    else:
+                        listing = collected_listings[idx]
+                        result = TOOL_FUNCTIONS[fn_name](listing=listing, skills=skills, projects=projects)
+                        collected_pitches.append(result)
+                        tool_result_for_model = {"status": "pitch_drafted"}
+
                 else:
+                    result = TOOL_FUNCTIONS[fn_name](**fn_args)
                     tool_result_for_model = result
 
                 messages.append({
