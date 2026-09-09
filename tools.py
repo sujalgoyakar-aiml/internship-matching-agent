@@ -89,22 +89,19 @@ tool_schemas = [
     }},
     {"type": "function", "function": {
         "name": "score_match",
-        "description": (
-            "Score all internship listings collected so far against the candidate's skills. "
-            "Takes no arguments — the agent already holds the listings and skills. "
-            "Always call this with an empty arguments object: {}."
-        ),
-        "parameters": {"type": "object", "properties": {}, "required": []},
+        "description": "Score a list of internship listings against a list of candidate skills.",
+        "parameters": {"type": "object", "properties": {
+            "listings": {"type": "array", "description": "List of internship listing objects to score"},
+            "skills": {"type": "array", "items": {"type": "string"}, "description": "Candidate's skill list"}},
+            "required": ["listings", "skills"]},
     }},
     {"type": "function", "function": {
         "name": "draft_pitch",
-        "description": (
-            "Generate a short tailored pitch for ONE internship from the already-scored list. "
-            "Pass only the zero-based index of that listing — do not repeat its title, "
-            "company, or description back; the agent already has that data."
-        ),
+        "description": "Generate a short tailored pitch for ONE specific internship listing, referencing the candidate's matching project and skills.",
         "parameters": {"type": "object", "properties": {
-            "listing_index": {"type": "integer", "description": "Zero-based index of the listing in the scored list"}},
-            "required": ["listing_index"]},
+            "listing": {"type": "object", "description": "A single internship listing object (title, company, desc)"},
+            "skills": {"type": "array", "items": {"type": "string"}, "description": "Candidate's skill list"},
+            "projects": {"type": "array", "items": {"type": "string"}, "description": "Candidate's project names/descriptions"}},
+            "required": ["listing", "skills", "projects"]},
     }},
 ]
